@@ -3,6 +3,7 @@
  ## Hacktoberfest Contributing ##
 =======================================
 =======================================
+* Please note that this is a repository created for the Hacktoberfest event which does not begin yet.  PRs will not be accepted before this time and may be marked as invalid.
 
 1. all PRs must be approved.
 
