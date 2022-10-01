@@ -3,33 +3,28 @@ package main
 import (
 	"context"
 	"encoding/json"
+	"fmt"
+	"io"
+	"log"
+	"net/http"
+	"regexp"
 	"strings"
 
+	//client library
+	"github.com/go-redis/redis/v8"
 )
 
-//function compile on regex is a "sinister" func; suppose regex is invalid
-//validateinputregex processes immediately. First thing go executor is doing
-//is figuring out variables, regex.compile doesnt' tell you if the regex
-//fails or not. so MustCompile crashes the server immediately,
-//instead of crashing the server through user's bad
-//input after this point.
-
-//would actually need a redis server on the internet
-//or get a local Ubuntu environment working
 const redisAddress = "localhost:6379"
 
 var validateInputRegex = regexp.MustCompile(`^[a-zA-Z0-9]+$`)
 //this is read as type getHandler equals this next thing
 type getHandler struct {
-	store Client
+	store *redis.Client
 }
 
 func main() {
 
 	fmt.Println("Program Starting")
-	//redis.options is a structure initialization - argument to the new client function
-	//& is called referencing or taking the address of or making a pointer from
-	//or getting a pointer to. essentially just pointing it to a thing
 	rdb := redis.NewClient(&redis.Options{
 		Addr: redisAddress,
 	})
@@ -38,21 +33,14 @@ func main() {
 	key := ""
 	value := ""
 	set(context.Background(), rdb, key, value)
-	/*for testing:
 	output, err := get(rdb, key)
 	if err != nil {
 		fmt.Println(err)
 	}
 	fmt.Println(output)
-	*/
-	//initialize a gethandler struct - giving it a store
-	//handler is an interface that asks you to implement ServeHTTP and we have implemented
-	//that, therefore getHandler is a Handler.
+
 	getH := getHandler{
 
-		//store on the left - assigning to the field in getHandler
-		//called store. the store on the right is the variable I defined
-		//above appx line 27
 		store: rdb,
 	}
 }
@@ -82,15 +70,15 @@ func (h getHandler) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 func (h getHandler) handleGetRequest(ctx context.Context, key string, w http.ResponseWriter, req *http.Request) {
 	//now we have a valid key so now we can do get store
 	value, err := get(ctx, h.store, key)
-	//goland assists with coding in go!
-	// type name struct {
-	// 	key   string
-	// 	value string
-	// }
-	// myStruct := name{
-	// 	key:   "hello",
-	// 	value: "hello",
-	// }
+
+	type name struct {
+	key   string
+	value string
+	}
+	myStruct := name{
+	key:   "hello",
+	value: "hello",
+	}
 	//I'm gonna use a structure which has a key and a value.
 	//anonymous struct - a struct that you only use in one place
 	jsonbytes, err := json.Marshal(struct {
